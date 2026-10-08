@@ -1,0 +1,17 @@
+{
+  "name": "mecatronica-2025",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mecatrônica 2025 — uma experiência digital para guardar as memórias da turma.",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:videos": "node tools/build.mjs --videos",
+    "start": "npx --yes http-server -c-1 -p 8080 ."
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

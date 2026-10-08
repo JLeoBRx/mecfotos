@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mecatrônica 2025</title>
+  <meta name="description" content="Mecatrônica 2025 — uma jornada feita de projetos, desafios, amizades e histórias.">
+  <meta name="theme-color" content="#070606">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Mecatrônica 2025">
+  <meta property="og:description" content="Algumas histórias merecem ser lembradas.">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    document.documentElement.className = 'js';
+    // Pré-carrega as fontes da introdução (só em http/https; abrindo o arquivo direto do disco o navegador bloqueia).
+    if (/^https?:$/.test(location.protocol)) {
+      ['cormorant-garamond-latin-300-normal', 'inter-latin-wght-normal'].forEach(function (name) {
+        var link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'font';
+        link.type = 'font/woff2';
+        link.crossOrigin = 'anonymous';
+        link.href = 'assets/fonts/' + name + '.woff2';
+        document.head.appendChild(link);
+      });
+    }
+    // Rede de segurança: se o script principal não carregar, o site abre sem a introdução.
+    setTimeout(function () {
+      if (window.MEC_READY) return;
+      document.documentElement.className = '';
+      var intro = document.getElementById('intro');
+      if (intro) intro.hidden = true;
+    }, 6000);
+  </script>
+  <noscript><style>.intro, .player, .cursor { display: none !important; }</style></noscript>
+  <script src="media/manifest.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M20 12H4m6-6-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 3.8v3.6H16"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path class="fill" d="M8 5.5v13l10.5-6.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path class="fill" d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path class="fill" d="M17.5 6v12L9 12zM6.5 6h1.6v12H6.5z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path class="fill" d="M6.5 6v12L15 12zM15.9 6h1.6v12h-1.6z"/></symbol>
+    <symbol id="i-inf" viewBox="0 0 100 44"><path pathLength="1" d="M50 22c-8-11-15-17-24-17a17 17 0 0 0 0 34c9 0 16-6 24-17zm0 0c8 11 15 17 24 17a17 17 0 0 0 0-34c-9 0-16 6-24 17z"/></symbol>
+  </svg>
+
+  <!-- ============ INTRODUÇÃO ============ -->
+  <div class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro__shutter intro__shutter--top"></div>
+    <div class="intro__shutter intro__shutter--bottom"></div>
+    <div class="intro__abstract" aria-hidden="true"></div>
+    <div class="intro__bg" aria-hidden="true">
+      <div class="intro__zoom"><img class="intro__img" id="intro-img" alt="" decoding="async"></div>
+    </div>
+    <div class="intro__glow" aria-hidden="true"></div>
+    <div class="intro__vignette" aria-hidden="true"></div>
+    <div class="grain grain--live" aria-hidden="true"></div>
+
+    <div class="intro__content">
+      <h2 class="lockup" id="intro-title">
+        <span class="lockup__word">Mecatrônica</span>
+        <span class="lockup__year">2025</span>
+      </h2>
+      <p class="intro__phrase">Algumas histórias merecem ser lembradas.</p>
+      <div class="intro__actions">
+        <button class="btn" id="enter" type="button">
+          <span class="btn__label">Entrar na memória</span><span class="btn__line" aria-hidden="true"></span>
+        </button>
+        <button class="intro__sound" id="intro-sound" type="button" aria-pressed="true" hidden>
+          <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="intro__sound-label">Som ligado</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <a class="skip" href="#inicio">Pular para o conteúdo</a>
+
+  <!-- ============ NAVEGAÇÃO ============ -->
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="#inicio" aria-label="Mecatrônica 2025 — início">Mecatrônica <span>2025</span></a>
+    <button class="nav__toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">
+      <span class="nav__toggle-label">Menu</span>
+      <span class="nav__toggle-icon" aria-hidden="true"><i></i><i></i></span>
+    </button>
+    <nav class="nav__panel" id="nav-panel" aria-label="Principal">
+      <ul class="nav__list">
+        <li style="--i:0"><a class="nav__link" href="#inicio" data-section="inicio">Início</a></li>
+        <li style="--i:1"><a class="nav__link" href="#memorias" data-section="memorias">Memórias</a></li>
+        <li style="--i:2"><a class="nav__link" href="#fotos" data-section="fotos">Fotos</a></li>
+        <li style="--i:3"><a class="nav__link" href="#videos" data-section="videos">Vídeos</a></li>
+        <li style="--i:4"><a class="nav__link" href="#musica" data-music-open>Música</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="conteudo">
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="inicio" aria-labelledby="hero-title" tabindex="-1">
+      <div class="hero__media" aria-hidden="true">
+        <div class="hero__parallax" data-parallax="0.16">
+          <img class="hero__img" id="hero-img" alt="" decoding="async" fetchpriority="high">
+        </div>
+      </div>
+      <div class="hero__shade" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="hero__content">
+        <h1 class="hero__title" id="hero-title">
+          <span class="line"><span class="line__inner">Mecatrônica</span></span>
+          <span class="line line--year"><span class="line__inner">2025</span></span>
+        </h1>
+        <p class="hero__sub" data-split>Uma jornada feita de projetos, desafios, amizades e histórias.</p>
+      </div>
+      <a class="scroll-cue" href="#capitulo-1">
+        <span class="scroll-cue__label">Scroll</span>
+        <svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>
+      </a>
+    </section>
+
+    <!-- ============ I ============ -->
+    <section class="chapter" id="capitulo-1" aria-label="Capítulo I">
+      <p class="chapter__num" data-reveal="fade">I</p>
+      <p class="chapter__text" data-split>Foi aqui que tudo começou.</p>
+    </section>
+
+    <section class="plate" id="abertura" aria-label="Fotografia" hidden>
+      <button class="plate__frame" type="button" data-cursor="view">
+        <span class="plate__parallax" data-parallax="0.12">
+          <img class="plate__img" alt="" loading="lazy" decoding="async">
+        </span>
+      </button>
+    </section>
+
+    <!-- ============ MEMÓRIAS ============ -->
+    <section class="memories" id="memorias" aria-labelledby="memorias-title" tabindex="-1">
+      <header class="section-head">
+        <h2 class="display" id="memorias-title" data-reveal>Memórias</h2>
+        <p class="lede" data-split>Porque algumas fotografias conseguem fazer o tempo voltar.</p>
+      </header>
+      <div class="ed-grid memories__grid" id="memories-grid"></div>
+    </section>
+
+    <!-- ============ II ============ -->
+    <section class="chapter" id="capitulo-2" aria-label="Capítulo II">
+      <p class="chapter__num" data-reveal="fade">II</p>
+      <p class="chapter__text" data-split>Entre aulas, projetos e desafios…</p>
+    </section>
+
+    <!-- ============ FOTOS ============ -->
+    <section class="gallery" id="fotos" aria-labelledby="fotos-title">
+      <header class="section-head">
+        <h2 class="display" id="fotos-title" data-reveal>Fotografias</h2>
+        <p class="meta gallery__meta" data-reveal="fade"><span id="photo-total">0</span> registros</p>
+      </header>
+      <div class="ed-grid" id="gallery-grid"></div>
+      <noscript><p class="meta gallery__noscript">Ative o JavaScript para ver as fotografias.</p></noscript>
+      <div class="gallery__more" id="gallery-more-wrap" hidden>
+        <button class="btn" id="gallery-more" type="button">
+          <span class="btn__label">Ver mais fotografias</span><span class="btn__line" aria-hidden="true"></span>
+        </button>
+        <p class="gallery__count" aria-live="polite"><span id="gallery-shown">0</span> / <span id="gallery-total">0</span></p>
+      </div>
+    </section>
+
+    <!-- ============ III ============ -->
+    <section class="chapter" id="capitulo-3" aria-label="Capítulo III">
+      <p class="chapter__num" data-reveal="fade">III</p>
+      <p class="chapter__text" data-split>Alguns momentos passam rápido.</p>
+    </section>
+
+    <!-- ============ VÍDEOS ============ -->
+    <section class="videos" id="videos" aria-labelledby="videos-title">
+      <header class="section-head section-head--row">
+        <div>
+          <p class="eyebrow" data-reveal="fade">Vídeos</p>
+          <h2 class="display display--md" id="videos-title" data-reveal>Momentos em movimento</h2>
+        </div>
+        <div class="reel-nav" data-reveal="fade">
+          <button class="icon-btn" id="reel-prev" type="button" aria-label="Vídeos anteriores">
+            <svg class="icon" aria-hidden="true"><use href="#i-left"/></svg>
+          </button>
+          <button class="icon-btn" id="reel-next" type="button" aria-label="Próximos vídeos">
+            <svg class="icon" aria-hidden="true"><use href="#i-right"/></svg>
+          </button>
+        </div>
+      </header>
+      <div class="reel" id="reel"></div>
+      <div class="reel-progress" aria-hidden="true"><span id="reel-bar"></span></div>
+    </section>
+
+    <!-- ============ NÚMEROS ============ -->
+    <section class="numbers" id="numeros" aria-label="Em números">
+      <dl class="numbers__list">
+        <div class="stat" data-stat="photos">
+          <dt>Fotografias</dt>
+          <dd><span class="stat__num"><span class="stat__ghost" aria-hidden="true">0</span><span class="stat__value" aria-hidden="true">0</span></span></dd>
+        </div>
+        <div class="stat" data-stat="videos">
+          <dt>Vídeos</dt>
+          <dd><span class="stat__num"><span class="stat__ghost" aria-hidden="true">0</span><span class="stat__value" aria-hidden="true">0</span></span></dd>
+        </div>
+        <div class="stat" data-stat="year">
+          <dt>Um ano</dt>
+          <dd aria-label="2025"><span class="stat__num"><span class="stat__ghost" aria-hidden="true">2025</span><span class="stat__value" aria-hidden="true">2025</span></span></dd>
+        </div>
+        <div class="stat" data-stat="infinite">
+          <dt>Memórias</dt>
+          <dd aria-label="Infinitas"><span class="stat__num"><svg class="stat__inf" aria-hidden="true"><use href="#i-inf"/></svg></span></dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ============ IV ============ -->
+    <section class="chapter" id="capitulo-4" aria-label="Capítulo IV">
+      <p class="chapter__num" data-reveal="fade">IV</p>
+      <p class="chapter__text" data-split>E outros ficam para sempre.</p>
+    </section>
+
+    <section class="plate plate--closing plate--empty" id="ultima" aria-label="Agradecimento">
+      <button class="plate__frame" type="button" data-cursor="view" tabindex="-1">
+        <span class="plate__parallax" data-parallax="0.14">
+          <img class="plate__img" alt="" loading="lazy" decoding="async">
+        </span>
+      </button>
+      <div class="plate__caption">
+        <p class="plate__text" data-split>Obrigado por fazer parte dessa história.</p>
+      </div>
+    </section>
+
+    <!-- ============ FINAL ============ -->
+    <section class="finale" id="final" aria-label="Final">
+      <div class="finale__glow" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="finale__inner">
+        <p class="finale__line finale__line--1">O ano acabou.</p>
+        <p class="finale__line finale__line--2">Mas a história continua.</p>
+        <div class="finale__end">
+          <h2 class="lockup finale__lockup">
+            <span class="lockup__word">Mecatrônica</span>
+            <span class="lockup__year">2025</span>
+          </h2>
+          <p class="finale__sub">Para nunca esquecer.</p>
+          <button class="btn finale__replay" id="replay" type="button">
+            <span class="btn__label">Reviver a experiência</span>
+            <svg class="icon btn__icon" aria-hidden="true"><use href="#i-replay"/></svg>
+            <span class="btn__line" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ MÚSICA ============ -->
+  <aside class="player" id="musica" aria-label="Música" hidden>
+    <div class="player__panel" id="player-panel" role="group" aria-label="Controles de música">
+      <p class="eyebrow player__label">Tocando agora</p>
+      <p class="player__title" id="player-title"></p>
+      <p class="player__artist" id="player-artist"></p>
+      <input class="player__seek" id="player-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Posição da música">
+      <div class="player__times"><span id="player-time">0:00</span><span id="player-duration">0:00</span></div>
+      <div class="player__controls">
+        <button class="icon-btn" id="player-prev" type="button" aria-label="Faixa anterior"><svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg></button>
+        <button class="player__main" id="player-main" type="button" aria-label="Tocar">
+          <svg class="icon icon--play" aria-hidden="true"><use href="#i-play"/></svg>
+          <svg class="icon icon--pause" aria-hidden="true"><use href="#i-pause"/></svg>
+        </button>
+        <button class="icon-btn" id="player-next" type="button" aria-label="Próxima faixa"><svg class="icon" aria-hidden="true"><use href="#i-next"/></svg></button>
+      </div>
+      <ol class="player__list" id="player-list"></ol>
+    </div>
+    <div class="player__pill">
+      <button class="player__toggle" id="player-toggle" type="button" aria-expanded="false" aria-controls="player-panel">
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="player__now" id="player-now">Música</span>
+      </button>
+      <button class="player__play" id="player-play" type="button" aria-label="Tocar">
+        <svg class="icon icon--play" aria-hidden="true"><use href="#i-play"/></svg>
+        <svg class="icon icon--pause" aria-hidden="true"><use href="#i-pause"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ LIGHTBOX ============ -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Fotografias" hidden>
+    <div class="lightbox__stage" id="lightbox-stage">
+      <div class="lightbox__figure" id="lightbox-figure">
+        <img class="lightbox__ph" id="lightbox-ph" alt="" aria-hidden="true">
+        <img class="lightbox__img" id="lightbox-img" alt="">
+      </div>
+    </div>
+    <div class="lightbox__top">
+      <p class="lightbox__count" id="lightbox-count" aria-live="polite">1 / 1</p>
+      <button class="icon-btn" id="lightbox-close" type="button" aria-label="Fechar">
+        <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <button class="icon-btn lightbox__arrow lightbox__arrow--prev" id="lightbox-prev" type="button" aria-label="Fotografia anterior">
+      <svg class="icon" aria-hidden="true"><use href="#i-left"/></svg>
+    </button>
+    <button class="icon-btn lightbox__arrow lightbox__arrow--next" id="lightbox-next" type="button" aria-label="Próxima fotografia">
+      <svg class="icon" aria-hidden="true"><use href="#i-right"/></svg>
+    </button>
+  </div>
+
+  <!-- ============ PLAYER DE VÍDEO ============ -->
+  <div class="cinema" id="cinema" role="dialog" aria-modal="true" aria-labelledby="cinema-title" hidden>
+    <div class="cinema__top">
+      <p class="cinema__title" id="cinema-title"></p>
+      <button class="icon-btn" id="cinema-close" type="button" aria-label="Fechar vídeo">
+        <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="cinema__stage">
+      <video class="cinema__video" id="cinema-video" controls playsinline preload="none"></video>
+      <p class="cinema__message" id="cinema-message" hidden></p>
+    </div>
+  </div>
+
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <div class="cursor__dot"></div>
+    <div class="cursor__follow">
+      <div class="cursor__ring">
+        <span class="cursor__label">Ver</span>
+        <svg class="cursor__play"><use href="#i-play"/></svg>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
