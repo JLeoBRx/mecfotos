@@ -5,7 +5,7 @@
  * Lê as pastas
  *   media/fotos     fotografias (jpg, jpeg, png, webp, avif, gif)
  *   media/videos    vídeos (mp4, webm, mov, m4v) e, opcionalmente, capas com o mesmo nome do vídeo
- *   media/musicas   trilhas (mp3, m4a, aac, ogg, opus, wav)
+ *   media/musicas   trilhas (mp3, m4a, aac, ogg, opus, wav); "projetor….mp3" vira o efeito sonoro da abertura
  * e escreve media/manifest.js, que o site lê ao abrir. Os números do site (fotografias,
  * vídeos) saem daqui: são sempre a contagem real dos arquivos.
  *
@@ -315,7 +315,30 @@ function probe(abs) {
   return { w, h, duration, codec: v ? v.codec_name : null, tags };
 }
 
-async function processVideos(ffmpeg, config) {
+// Escolhe, entre alguns quadros do vídeo, o mais nítido e bem exposto (evita capas tremidas ou escuras).
+// Sem sharp, usa um quadro do início.
+async function posterTime(abs, duration, sharp) {
+  const fallback = duration ? Math.min(1.5, duration * 0.1) : 0;
+  if (!sharp || !duration || duration < 1) return fallback;
+  let best = { score: -1, at: fallback };
+  for (const k of [0.12, 0.3, 0.5, 0.7, 0.88]) {
+    const at = round(duration * k, 2);
+    const r = spawnSync('ffmpeg', ['-v', 'error', '-ss', String(at), '-i', abs, '-frames:v', '1', '-vf', 'scale=320:-2',
+      '-f', 'image2pipe', '-vcodec', 'png', '-'], { maxBuffer: 16 * 1024 * 1024, windowsHide: true });
+    if (r.status !== 0 || !r.stdout || !r.stdout.length) continue;
+    try {
+      const stats = await sharp(r.stdout).stats();
+      const [red, green, blue] = stats.channels;
+      const luma = 0.299 * red.mean + 0.587 * green.mean + 0.114 * blue.mean;
+      const exposure = luma < 45 ? luma / 45 : luma > 215 ? (255 - luma) / 40 : 1;
+      const score = stats.sharpness * exposure;
+      if (score > best.score) best = { score, at };
+    } catch { /* quadro ilegível: ignora */ }
+  }
+  return best.at;
+}
+
+async function processVideos(ffmpeg, config, sharp) {
   const dir = path.join(MEDIA, 'videos');
   const files = await walk(dir);
   const fileSet = new Set(files.map((f) => f.toLowerCase()));
@@ -348,7 +371,7 @@ async function processVideos(ffmpeg, config) {
       const target = path.join(GEN, 'videos', `${stripExt(rel)}.jpg`);
       if (ffmpeg && !(await isFresh(target, stat))) {
         await fs.mkdir(path.dirname(target), { recursive: true });
-        const at = meta && meta.duration ? Math.min(1.5, meta.duration * 0.1) : 0;
+        const at = await posterTime(abs, meta && meta.duration, sharp);
         const r = run('ffmpeg', ['-y', '-v', 'error', '-ss', String(at), '-i', abs, '-frames:v', '1',
           '-vf', `scale='min(${POSTER_WIDTH},iw)':-2`, '-q:v', '4', target]);
         if (r.status !== 0) warn(`videos/${rel}: não foi possível gerar a capa.`);
@@ -387,22 +410,39 @@ async function processVideos(ffmpeg, config) {
 
 /* ----------------------------------------------------------------- músicas */
 
-async function processMusic(ffmpeg) {
+// "musica-de-fundo01.mp3", "faixa 3.mp3"… → "Trilha 01", "Trilha 03" (nome genérico vira só o número).
+function trackTitle(rel) {
+  const name = stripExt(path.posix.basename(rel)).toLowerCase();
+  const m = name.match(/^(?:m[uú]sica|music|trilha|faixa|track|[aá]udio|som|song)(?:[-_ ]*de[-_ ]*fundo)?[-_ ]*(\d+)$/);
+  return m ? `Trilha ${m[1].padStart(2, '0')}` : prettyName(rel);
+}
+
+// Arquivos de áudio chamados "projetor…" são o efeito sonoro da abertura, não músicas da playlist.
+const isProjector = (rel) => /^proje[ct]or/i.test(path.posix.basename(rel));
+
+async function processMusic(ffmpeg, config) {
   const dir = path.join(MEDIA, 'musicas');
   const files = await walk(dir);
-  const out = [];
+  const titles = (config && config.musicas) || {};
+  const music = [];
+  const effects = {};
   for (const rel of files) {
     const ext = extOf(rel);
     if (EXT_UNSUPPORTED.has(ext)) { warn(`musicas/${rel}: formato ${ext} não toca em todos os navegadores — converta para MP3.`); continue; }
     if (!EXT_AUDIO.has(ext)) continue;
     const abs = path.join(dir, rel);
     const meta = ffmpeg ? probe(abs) : null;
-    const item = { src: webPath(abs), title: (meta && meta.tags.title) || prettyName(rel) };
+    if (isProjector(rel)) {
+      if (!effects.projector) effects.projector = { src: webPath(abs) };
+      continue;
+    }
+    const base = path.posix.basename(rel);
+    const item = { src: webPath(abs), title: titles[rel] || titles[base] || (meta && meta.tags.title) || trackTitle(rel) };
     if (meta && meta.tags.artist) item.artist = meta.tags.artist;
     if (meta && meta.duration) item.duration = round(meta.duration, 1);
-    out.push(item);
+    music.push(item);
   }
-  return out;
+  return { music, effects };
 }
 
 /* ------------------------------------------------------------------ config */
@@ -461,6 +501,7 @@ function serialize(manifest) {
     `  "photos": ${lines(manifest.photos)},`,
     `  "videos": ${lines(manifest.videos)},`,
     `  "music": ${lines(manifest.music)},`,
+    `  "effects": ${JSON.stringify(manifest.effects)},`,
     `  "config": ${JSON.stringify(manifest.config)}`,
     '};',
     '',
@@ -482,15 +523,15 @@ async function main() {
 
   const config = await readConfig();
   const photos = await processPhotos(sharp);
-  const videos = await processVideos(ffmpeg, config);
-  const music = await processMusic(ffmpeg);
+  const videos = await processVideos(ffmpeg, config, sharp);
+  const { music, effects } = await processMusic(ffmpeg, config);
   checkConfig(config, photos);
 
-  const manifest = { generated: new Date().toISOString(), photos, videos, music, config };
+  const manifest = { generated: new Date().toISOString(), photos, videos, music, effects, config };
   await fs.writeFile(path.join(MEDIA, 'manifest.js'), serialize(manifest));
   const removed = await prune(GEN);
 
-  console.log(`\n  ${photos.length} fotografias · ${videos.length} vídeos · ${music.length} músicas`);
+  console.log(`\n  ${photos.length} fotografias · ${videos.length} vídeos · ${music.length} músicas${effects.projector ? ' · efeito do projetor' : ''}`);
   if (removed) console.log(`  ${removed} arquivo(s) gerado(s) antigo(s) removido(s)`);
   console.log('  media/manifest.js atualizado.');
   if (warnings.length) {

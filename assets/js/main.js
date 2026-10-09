@@ -127,7 +127,8 @@
       .filter((t) => t && t.src)
       .map((t) => ({ src: t.src, title: t.title || 'Faixa', artist: t.artist || '', duration: Number(t.duration) || 0 }));
     const config = raw.config && typeof raw.config === 'object' ? raw.config : {};
-    return { photos, videos, music, config, demo };
+    const effects = raw.effects && typeof raw.effects === 'object' ? raw.effects : {};
+    return { photos, videos, music, effects, config, demo };
   }
 
   // Imagens abstratas para pré-visualizar o layout (?demo). Não são fotos reais.
@@ -438,7 +439,11 @@
       phase = 'leaving';
       clear();
       node.classList.remove('is-skip');
-      if (soundOn) Music.play({ fade: true });
+      // Som só depois deste clique: o projetor "liga" junto com a cortina e a trilha entra em seguida.
+      if (soundOn) {
+        Projector.play();
+        if (!Music.playing()) Music.play({ fade: true, delay: Projector.available() ? 1400 : 0 });
+      }
       node.classList.add('is-leaving');
       Inert.remove('intro');
       later(() => root.classList.add('is-entered'), motion.reduced ? 0 : 380);
@@ -1195,6 +1200,29 @@
     });
   }
 
+  /* ------------------------------------------------- efeito do projetor */
+
+  // media/musicas/projetor*.mp3: toca uma vez quando a cortina da introdução se abre.
+  const Projector = (() => {
+    let sound = null;
+    return {
+      init(effect) {
+        if (!effect || !effect.src) return;
+        sound = new Audio();
+        sound.preload = 'auto';
+        sound.src = effect.src;
+        sound.volume = 0.6;
+      },
+      available: () => !!sound,
+      play() {
+        if (!sound) return;
+        try { sound.currentTime = 0; } catch (e) { /* ainda sem dados */ }
+        const attempt = sound.play();
+        if (attempt && attempt.catch) attempt.catch(() => {});
+      },
+    };
+  })();
+
   /* ------------------------------------------------------------ música */
 
   const Music = (() => {
@@ -1215,6 +1243,7 @@
     let resumeAfter = false;
     let seeking = false;
     let errors = 0;
+    let startTimer = 0;
 
     function setPlaying(on) {
       player.classList.toggle('is-playing', on);
@@ -1261,15 +1290,27 @@
     function play(opts) {
       if (!audio) return;
       cancelAnimationFrame(fadeRaf);
+      clearTimeout(startTimer);
       const fade = opts && opts.fade;
+      const delay = (opts && opts.delay) || 0;
       audio.volume = fade ? 0 : 1;
+      // play() precisa acontecer dentro do clique (exigência do iOS). Com atraso, toca mudo até a hora de entrar.
+      audio.muted = delay > 0;
       const attempt = audio.play();
-      if (attempt && attempt.catch) attempt.catch(() => setPlaying(false));
-      if (fade) fadeTo(1, 1800);
+      if (attempt && attempt.catch) attempt.catch(() => { audio.muted = false; setPlaying(false); });
+      const start = () => {
+        if (delay && !audio.paused) audio.currentTime = 0;
+        audio.muted = false;
+        if (fade) fadeTo(1, delay ? 2600 : 1800);
+      };
+      if (delay) startTimer = setTimeout(start, delay);
+      else start();
     }
 
     function pause(opts) {
       if (!audio) return;
+      clearTimeout(startTimer);
+      audio.muted = false;
       if (opts && opts.fade) fadeTo(0, 600, () => audio.pause());
       else { cancelAnimationFrame(fadeRaf); audio.pause(); }
     }
@@ -1375,9 +1416,9 @@
         }
         load(0);
         bind();
-        Intro.enableSound();
       },
       play,
+      playing: () => !!audio && !audio.paused,
       // Pausa durante um vídeo e retoma depois, só se estava tocando.
       duck(on) {
         if (!audio) return;
@@ -1518,6 +1559,8 @@
     Videos.init(media.videos);
     initNumbers({ photos: media.photos.length, videos: media.videos.length });
     Music.init(media.music);
+    Projector.init(media.effects.projector);
+    if (media.music.length || Projector.available()) Intro.enableSound();
     Finale.init();
     initCursor();
     $$('[data-parallax]').forEach(Parallax.add);

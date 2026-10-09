@@ -557,6 +557,12 @@ p { margin: 0; }
   background:
     linear-gradient(to top, rgba(7, 6, 6, 0.92) 0%, rgba(7, 6, 6, 0.35) 42%, rgba(7, 6, 6, 0.1) 70%, rgba(7, 6, 6, 0.45) 100%);
 }
+/* Com foto: mais sombra embaixo e à esquerda, onde fica o título. */
+.hero.has-photo .hero__shade {
+  background:
+    linear-gradient(to top, rgba(7, 6, 6, 0.95) 0%, rgba(7, 6, 6, 0.66) 34%, rgba(7, 6, 6, 0.24) 62%, rgba(7, 6, 6, 0.5) 100%),
+    linear-gradient(to right, rgba(7, 6, 6, 0.55) 0%, rgba(7, 6, 6, 0) 62%);
+}
 .hero .grain { opacity: 0.045; }
 
 .hero__content {

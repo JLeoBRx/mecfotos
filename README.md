@@ -28,9 +28,10 @@ O site só mostra o que estiver no manifesto. Por isso, **rode `npm run build` s
 ### O que o build faz
 
 - **Fotos:** lê as dimensões e a rotação EXIF. Com `sharp` instalado, também gera versões WebP leves de 640, 1280 e 1920 px em `media/_gerado/fotos/` e a cor média de cada foto (usada enquanto a imagem carrega). Sem `sharp`, o site usa os arquivos originais.
-- **Vídeos:** com `ffmpeg` instalado, gera a capa e lê duração e proporção. Uma imagem com o mesmo nome do vídeo (`formatura.mp4` + `formatura.jpg`) é usada como capa no lugar da gerada.
+- **Vídeos:** com `ffmpeg` instalado, gera a capa e lê duração e proporção. Com `sharp`, a capa é o quadro mais nítido e bem exposto entre cinco momentos do vídeo. Uma imagem com o mesmo nome do vídeo (`formatura.mp4` + `formatura.jpg`) é usada como capa no lugar da gerada.
 - **Vídeos de celular (.mov / HEVC):** nem todo navegador toca. Rode `npm run build:videos` para converter para MP4 H.264 leve, com no máximo 1920 px e reprodução que começa antes do download terminar.
-- **Músicas:** o título vem das tags do arquivo (com `ffmpeg`) ou do nome do arquivo (`01 - Nossa música.mp3` → "Nossa música").
+- **Músicas:** o título vem das tags do arquivo (com `ffmpeg`) ou do nome do arquivo (`01 - Nossa música.mp3` → "Nossa música"). Nomes genéricos viram só o número (`musica-de-fundo01.mp3` → "Trilha 01").
+- **Efeito do projetor:** um áudio em `media/musicas/` cujo nome começa com `projetor` não entra na playlist. Ele toca uma vez, quando a cortina da introdução se abre, e a trilha entra logo depois.
 - **Avisos:** formatos que não abrem no navegador (HEIC, por exemplo) e referências inválidas no `config.json` aparecem no final da execução.
 
 Arquivos gerados para mídias que não existem mais são removidos automaticamente.
@@ -45,7 +46,8 @@ Sem configuração, o site escolhe sozinho. A capa é a primeira foto horizontal
   "abertura": "primeiro-dia.jpg",
   "final": "ultima-aula.jpg",
   "destaques": ["foto1.jpg", "foto2.jpg", "foto3.jpg", "foto4.jpg", "foto5.jpg"],
-  "videos": { "VID_20250312.mp4": "Apresentação do projeto" }
+  "videos": { "VID_20250312.mp4": "Apresentação do projeto" },
+  "musicas": { "musica-de-fundo01.mp3": "Nome da música" }
 }
 ```
 
@@ -54,6 +56,7 @@ Sem configuração, o site escolhe sozinho. A capa é a primeira foto horizontal
 - `final`: última fotografia, com "Obrigado por fazer parte dessa história."
 - `destaques`: até 5 fotos da seção Memórias
 - `videos`: títulos para os vídeos. Sem título, o vídeo aparece como "Momento 01", "Momento 02"…
+- `musicas`: títulos para as faixas do player
 
 Rode `npm run build` depois de editar o arquivo.
 
@@ -81,7 +84,7 @@ O GitHub Pages aceita sites de até 1 GB e arquivos de até 100 MB. Com muitas f
 8. **Em números:** contagem animada a partir dos arquivos reais.
 9. **Final:** "O ano acabou." → "Mas a história continua." → título → "Para nunca esquecer." → **Reviver a experiência ↻**, que volta ao início.
 
-**Música:** player compacto no canto inferior direito. Nunca toca sozinha. Se houver músicas e o "Som ligado" estiver ativo na introdução, ela começa (com fade) ao clicar em "Entrar na memória". A escolha fica salva no navegador.
+**Música:** player compacto no canto inferior direito. Nunca toca sozinha. Com "Som ligado" na introdução, o clique em "Entrar na memória" toca o projetor e, em seguida, a trilha entra em fade. A escolha fica salva no navegador.
 
 ## Leveza e acessibilidade
 
